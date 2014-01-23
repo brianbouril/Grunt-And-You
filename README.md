@@ -1,4 +1,4 @@
-grunt-presentation
+Grunt And You
 ==================
 
-Using Grunt.js for quick development automation and production ready builds.
+Using Grunt.js for quick Front End Development automation and production ready builds.
