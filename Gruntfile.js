@@ -47,6 +47,15 @@ module.exports = function(grunt) {
       }
     },
 
+    groc: {
+      javascript: [
+        "js/testdocdir/**/*.js", "README.md"
+      ],
+      options: {
+        "out": "doc/"
+      }
+    },
+
     /**
      * JSHint
      * https://npmjs.org/package/grunt-jsbeautifier
@@ -139,9 +148,10 @@ module.exports = function(grunt) {
 
   });
 
+  grunt.registerTask('docs', '*Creat Documentation.', ['groc']);
   grunt.registerTask('test', '*Lint* javascript.', ['jshint', 'jsbeautifier:git-pre-commit']);
   grunt.registerTask('server', 'Run presentation locally and start watch process (living document).', ['buildIndex', 'sass', 'connect:livereload', 'watch']);
-  grunt.registerTask('dist', 'Save presentation files to *dist* directory.', ['test', 'sass', 'buildIndex', 'copy']);
+  grunt.registerTask('dist', 'Save presentation files to *dist* directory.', ['test', 'sass', 'buildIndex', 'copy', 'docs']);
   grunt.registerTask('default', ['test', 'server']);
 };
 

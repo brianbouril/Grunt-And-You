@@ -1,0 +1,225 @@
+<!DOCTYPE html><html lang="en"><head><title>js/testdocdir/models/scene</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../../../"><meta name="groc-document-path" content="js/testdocdir/models/scene"><meta name="groc-project-path" content="js/testdocdir/models/scene.js"><link rel="stylesheet" type="text/css" media="all" href="../../../assets/style.css"><script type="text/javascript" src="../../../assets/behavior.js"></script><body><div id="meta"><div class="file-path">js/testdocdir/models/scene.js</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">define</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">require</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">_</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;underscore&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;M4jquery&#39;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">logger</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/logger&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">Backbone</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;backbone&quot;</span><span class="p">);</span>
+  <span class="c1">//var ToolgroupCollection = require(&quot;M4/collections/toolgroups&quot;);</span>
+  <span class="c1">//var ToolModel = require(&quot;M4/models/toolgroup&quot;);</span>
+  <span class="c1">//var ControllerModel = require(&quot;M4/models/controller&quot;);</span>
+  <span class="c1">//var WatchlistModel = require(&quot;M4/models/scene_watchlist&quot;);</span>
+  <span class="kd">var</span> <span class="nx">Labels</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/labels&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">ConfigLoader</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;bootstrap/config-loader&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">eventManager</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/events&quot;</span><span class="p">);</span>
+
+  <span class="kd">var</span> <span class="nx">SceneModel</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    
+    <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span> <span class="o">=</span> <span class="nx">eventManager</span><span class="p">;</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;focus&#39;</span><span class="p">).</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">maxFocus</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="s2">&quot;s:grid:afterFocusActive&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">focus</span><span class="p">){</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">addFocus</span><span class="p">(</span><span class="nx">focus</span><span class="p">);</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterFocusChange&quot;</span><span class="p">);</span>
+      <span class="p">},</span> <span class="k">this</span><span class="p">);</span>
+
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="s2">&quot;s:grid:afterFocusInactive&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">){</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">removeFocusById</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+      <span class="p">},</span> <span class="k">this</span><span class="p">);</span>
+
+
+      <span class="c1">//broadcast a message to the framework when any attribute changed.</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="c1">//var scope = self.getScope();</span>
+        <span class="c1">//self.eventManager.emit(&quot;s:fw:save&quot;, { data: { level: [scope.instanceId] }, scope: scope}); </span>
+      <span class="p">});</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public   method addFocus</span></p>
+
+<p>Adds focus to "focuses" array</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>args must be an Object.</strong><br/>(Object literal currently containing the "id" and "name" of the focus)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre><code>self.addFocus({id: 'id0001', name: 'Google (GOOG)'});
+</code></pre></div></div><div class="code"><div class="wrapper">    <span class="nx">addFocus</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">args</span><span class="p">){</span>
+
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">title</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">title</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">focus</span> <span class="o">=</span> <span class="p">{};</span>
+      <span class="kd">var</span> <span class="nx">focuses</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;focus&#39;</span><span class="p">).</span><span class="nx">items</span><span class="p">;</span>
+
+      <span class="kd">function</span> <span class="nx">increaseCount</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span> <span class="o">===</span> <span class="mi">7</span><span class="p">){</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+
+      <span class="k">if</span><span class="p">(</span><span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="nx">self</span><span class="p">.</span><span class="nx">maxFocus</span><span class="p">){</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;b:fw:promptFocusLimitReached&quot;</span><span class="p">);</span>
+      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+        <span class="nx">focus</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="nx">id</span><span class="p">;</span>
+        <span class="nx">focus</span><span class="p">.</span><span class="nx">title</span> <span class="o">=</span> <span class="nx">title</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">focus</span><span class="p">.</span><span class="nx">options</span><span class="p">){</span>
+          <span class="nx">focus</span><span class="p">.</span><span class="nx">options</span> <span class="o">=</span> <span class="p">{};</span>
+
+
+          <span class="k">if</span><span class="p">(</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">options</span><span class="p">.</span><span class="nx">colorClass</span> <span class="o">===</span> <span class="s2">&quot;focusColor-&quot;</span><span class="o">+</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span><span class="p">)){</span>
+            <span class="nx">increaseCount</span><span class="p">();</span>
+          <span class="p">}</span>
+          
+          <span class="nx">focus</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">colorClass</span> <span class="o">=</span> <span class="s2">&quot;focusColor-&quot;</span><span class="o">+</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">colorCounter</span><span class="p">);</span>
+          <span class="nx">increaseCount</span><span class="p">();</span>
+        <span class="p">};</span>
+
+        <span class="nx">focuses</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">focus</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public method makeFocusActive</span></p>
+
+<p>Makes a focus active</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>urn must be a string.</strong><br/>(the identifier for the focus object that needs to be made active)</li>
+</ul>
+
+<p><strong>Returns an Object</strong><br/>(a pointer back to the object for chaining purposes)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">makeFocusActive</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">urn</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">focuses</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;focus&quot;</span><span class="p">).</span><span class="nx">items</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">length</span> <span class="o">=</span> <span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">)){</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">urn</span> <span class="o">!==</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">).</span><span class="nx">id</span><span class="p">){</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">urn</span><span class="p">){</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">,</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterSuperFocusChange&quot;</span><span class="p">);</span>
+            <span class="p">}</span>
+          <span class="p">};</span>
+        <span class="p">}</span>
+      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">urn</span><span class="p">){</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">,</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterSuperFocusChange&quot;</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+      <span class="p">}</span>
+
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public method getActiveFocus()</span></p>
+
+<p>Retrieve the active focus </p>
+
+<p><strong>Returns an Object</strong><br/>(the focus object)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">getActiveFocus</span><span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">active</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">)</span> <span class="o">||</span> <span class="kc">null</span>
+
+      <span class="k">return</span> <span class="nx">active</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public method resetActiveItems</span></p>
+
+<p>Reset active items back to the first item in the focus array</p>
+
+<p><strong>Returns an Object</strong><br/>(a pointer back to the object for chaining purposes)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">resetActiveItems</span><span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">focuses</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;focus&quot;</span><span class="p">).</span><span class="nx">items</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">firstItem</span> <span class="o">=</span> <span class="nx">focuses</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+
+      <span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="nx">focuses</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">firstItem</span><span class="p">);</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">makeFocusActive</span><span class="p">(</span><span class="nx">focuses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">id</span><span class="p">);</span>
+
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterFocusChange&quot;</span><span class="p">);</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterFocusReset&quot;</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public   method removeFocusById</span></p>
+
+<p>Remove focus from "focuses" array</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>id must be a String.</strong><br/>(Id string of focus)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre><code>self.removeFocusById('id0001');
+</code></pre></div></div><div class="code"><div class="wrapper">    <span class="nx">removeFocusById</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">index</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getFocusIndexById</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">focuses</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;focus&#39;</span><span class="p">).</span><span class="nx">items</span><span class="p">;</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;activeFocus&quot;</span><span class="p">).</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">id</span><span class="p">){</span>
+          <span class="nx">focuses</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">makeFocusActive</span><span class="p">(</span><span class="nx">focuses</span><span class="p">[</span><span class="nx">focuses</span><span class="p">.</span><span class="nx">length</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="nx">id</span><span class="p">);</span>
+        <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+          <span class="nx">focuses</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>        
+        <span class="p">}</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterFocusRemove&quot;</span><span class="p">);</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:scene:afterFocusChange&quot;</span><span class="p">,</span> <span class="nx">id</span><span class="p">);</span>
+      <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;s:fw:promptRemoveLastFocus&quot;</span><span class="p">);</span>
+      <span class="p">}</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public   method getFocusById</span></p>
+
+<p>Get the focus object by it's id</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>id must be a String.</strong><br/>(Id string of focus)</li>
+</ul>
+
+<p><strong>Returns an Object</strong><br/>(focus object)</p>
+
+<p>Example:</p>
+
+<pre><code>self.getFocusById('id0001');
+</code></pre></div></div><div class="code"><div class="wrapper">    <span class="nx">getFocusById</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">collection</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;focus&#39;</span><span class="p">).</span><span class="nx">items</span><span class="p">;</span>
+      <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">collection</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">focus</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">focus</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">id</span><span class="p">;</span>
+      <span class="p">});</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section doc-section-public"><div class="wrapper"><p><span class='doc-section-header'>Public   method getFocusIndexById</span></p>
+
+<p>Get the focus index position by it's id</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>id must be a String.</strong><br/>(Id string of focus)</li>
+</ul>
+
+<p><strong>Returns a number</strong><br/>(index of focus)</p>
+
+<p>Example:</p>
+
+<pre><code>self.getFocusIndexById('id0001');
+</code></pre></div></div><div class="code"><div class="wrapper">    <span class="nx">getFocusIndexById</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">){</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">focus</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getFocusById</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;focus&#39;</span><span class="p">).</span><span class="nx">items</span><span class="p">,</span> <span class="nx">focus</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="nx">i</span><span class="p">;</span>
+    <span class="p">}</span>
+
+  <span class="p">});</span>
+
+  <span class="k">return</span> <span class="nx">SceneModel</span><span class="p">;</span>
+  
+<span class="p">});</span></div></div></div></div></body></html>

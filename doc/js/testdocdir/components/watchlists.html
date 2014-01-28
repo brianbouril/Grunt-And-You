@@ -1,0 +1,472 @@
+<!DOCTYPE html><html lang="en"><head><title>js/testdocdir/components/watchlists</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../../../"><meta name="groc-document-path" content="js/testdocdir/components/watchlists"><meta name="groc-project-path" content="js/testdocdir/components/watchlists.js"><link rel="stylesheet" type="text/css" media="all" href="../../../assets/style.css"><script type="text/javascript" src="../../../assets/behavior.js"></script><body><div id="meta"><div class="file-path">js/testdocdir/components/watchlists.js</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="nx">define</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">require</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;M4jquery&#39;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">_</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;underscore&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">Backbone</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;backbone&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">logger</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/logger&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">Watchlist</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/models/glb_watchlist&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">fileMgmt</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;utils/file-mgmt-facade&#39;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">eventManager</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;M4/events&#39;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">ajax</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/ajax&quot;</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">Url</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;M4/url-builder&quot;</span><span class="p">);</span>
+
+  <span class="kd">var</span> <span class="nx">Watchlists</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+    <span class="nx">model</span><span class="o">:</span> <span class="nx">Watchlist</span><span class="p">,</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method initialize initialize the method</span></p></div></div><div class="code"><div class="wrapper">    <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span> <span class="o">=</span> <span class="nx">eventManager</span><span class="p">;</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">init</span><span class="p">({</span>
+        <span class="nx">extendRender</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">evtPrefix</span><span class="o">:</span> <span class="s1">&#39;ugcDrawer&#39;</span>
+      <span class="p">},</span> <span class="nx">self</span><span class="p">);</span>
+
+      <span class="nx">self</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Url</span><span class="p">();</span>
+      <span class="c1">//self.fileMgmt = fileMgmt.returnAPI(2);</span>
+      <span class="c1">//self.loadLists();</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;s:fw:afterWatchlistCollectionChanged&#39;</span><span class="p">);</span>
+      <span class="p">});</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method comparator</span></p></div></div><div class="code"><div class="wrapper">    <span class="nx">comparator</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">wl</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="o">-</span><span class="nx">wl</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;createdDate&#39;</span><span class="p">);</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method loadListData</span></p>
+
+<p>Via Screener API, Gets the Lists from backend</p></div></div><div class="code"><div class="wrapper">    <span class="nx">loadLists</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="nx">self</span><span class="p">.</span><span class="nx">listsUrl</span> <span class="o">=</span> <span class="s2">&quot;/data-screener/api/v3/lists&quot;</span><span class="p">;</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span> <span class="o">&amp;&amp;</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span> <span class="o">!==</span> <span class="s1">&#39;temp&#39;</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">listsUrl</span> <span class="o">+=</span> <span class="s1">&#39;?activeListId=&#39;</span> <span class="o">+</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">active</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getActive</span><span class="p">();</span>
+          <span class="nx">active</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">modelChanged</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+
+      <span class="nx">ajax</span><span class="p">({</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">listsUrl</span><span class="p">,</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+        <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>add the lists to the collection</p></div></div><div class="code"><div class="wrapper">          <span class="nx">self</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">lists</span><span class="p">);</span>
+
+          <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">activeList</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">existingListModel</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+              <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">activeList</span><span class="p">.</span><span class="nx">fileMgmtObjId</span>
+            <span class="p">})[</span><span class="mi">0</span><span class="p">];</span>
+
+            <span class="nx">existingListModel</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">activeList</span><span class="p">,</span> <span class="p">{</span>
+              <span class="nx">silent</span><span class="o">:</span> <span class="kc">true</span>
+            <span class="p">});</span>
+
+          <span class="p">}</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>event emitter</p></div></div><div class="code"><div class="wrapper">          <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nx">data</span><span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getActive</span><span class="p">(),</span>
+            <span class="nx">activeListItem</span><span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span>
+          <span class="p">};</span>
+          <span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;b:listMgmt:dataLoaded&quot;</span><span class="p">,</span> <span class="nx">args</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method getLongFormListData</span></p>
+
+<p>Via Screener API, Gets the long form data for a list item
+from the backend, merges it into collection</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>key must be a String.</strong></li>
+</ul>
+
+<p><strong>Returns a Watchlist</strong><br/><strong>and</strong> <strong>Returns an Object</strong><br/>(list item)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">getLongFormListData</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">key</span> <span class="o">&amp;&amp;</span> <span class="nx">key</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ajax</span><span class="p">({</span>
+          <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists/&quot;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">,</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+          <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+          <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span>
+        <span class="p">}).</span><span class="nx">done</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>add the long form data to the collection</p></div></div><div class="code"><div class="wrapper">          <span class="nx">self</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="p">{</span>
+            <span class="nx">merge</span><span class="o">:</span> <span class="kc">true</span>
+          <span class="p">});</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">longFormData</span> <span class="o">=</span> <span class="nx">data</span><span class="p">;</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method getListByKey</span></p>
+
+<p><strong>Returns a List</strong></p></div></div><div class="code"><div class="wrapper">    <span class="nx">getListbyKey</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">list</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">key</span> <span class="o">&amp;&amp;</span> <span class="nx">key</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+          <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">key</span>
+        <span class="p">})[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">===</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+          <span class="s1">&#39;fileMgmtObjId&#39;</span><span class="o">:</span> <span class="nx">key</span>
+        <span class="p">})[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="p">}</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+       <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+      <span class="p">}</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method getActive</span></p>
+
+<p><strong>Returns a List</strong><br/>(The current active list)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">getActive</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">list</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span> <span class="o">&amp;&amp;</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+          <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span>
+        <span class="p">});</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">list</span> <span class="o">&amp;&amp;</span> <span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">list</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="nx">loadActiveResults</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">pgcriteria</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">active</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getActive</span><span class="p">();</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">active</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">pgcriteria</span> <span class="o">=</span> <span class="p">{</span>
+          <span class="nx">objectTypeId</span><span class="o">:</span> <span class="nx">active</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">objectTypeId</span><span class="p">,</span>
+          <span class="nx">pgcriteria</span><span class="o">:</span> <span class="nx">active</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">list</span><span class="p">.</span><span class="nx">pgcriteria</span><span class="p">,</span>
+          <span class="nx">filter</span><span class="o">:</span> <span class="nx">active</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">list</span><span class="p">.</span><span class="nx">filter</span>
+        <span class="p">};</span>
+        <span class="nx">ajax</span><span class="p">({</span>
+          <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/searchcriteria&quot;</span><span class="p">,</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+          <span class="nx">data</span><span class="o">:</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">pgcriteria</span><span class="p">),</span>
+          <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+          <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+          <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="nx">active</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">);</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">rows</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">rows</span><span class="p">;</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">counts</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">counts</span><span class="p">;</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">passedexclude</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">passedexclude</span><span class="p">;</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">passedinclude</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">passedinclude</span><span class="p">;</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">pos</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">pos</span><span class="p">;</span>
+
+            <span class="c1">//active.get(&#39;data&#39;).result.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+              <span class="nx">callback</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="nx">self</span><span class="p">.</span><span class="nx">eventManager</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;b:activeList:resultsLoaded&quot;</span><span class="p">,</span> <span class="p">{});</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method setListActiveColumnsetId</span></p>
+
+<p>Sets the columnsetId attr on the list and saves the list</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><p><strong>key must be a String.</strong><br/>(List key)</p></li>
+<li><p><strong>columnsetId must be a String.</strong><br/>(Columnset Key)</p></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">setListActiveColumnsetId</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">columnsetId</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getListbyKey</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">listdata</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">listdata</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;lastUsedColumnsetId&#39;</span><span class="p">,</span> <span class="nx">columnsetId</span><span class="p">);</span>
+          <span class="nx">list</span><span class="p">.</span><span class="nx">saveList</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method getListActiveColumnsetId</span></p>
+
+<p>Returns the columnsetId for the active list</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>key must be a String.</strong><br/>(list key)</li>
+</ul>
+
+<p><strong>Returns a String</strong><br/>(id columnsetId)</p></div></div><div class="code"><div class="wrapper">    <span class="nx">getListActiveColumnsetId</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">colsetid</span><span class="p">;</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;getListActiveColumnsetId: &#39;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getListbyKey</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span> <span class="o">&amp;&amp;</span> <span class="k">typeof</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">listdata</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">listdata</span><span class="p">.</span><span class="nx">lastUsedColumnSetId</span> <span class="o">&amp;&amp;</span> <span class="nx">listdata</span><span class="p">.</span><span class="nx">lastUsedColumnSetId</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">colsetid</span> <span class="o">=</span> <span class="nx">listdata</span><span class="p">.</span><span class="nx">lastUsedColumnSetId</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;objectTypeId&#39;</span><span class="p">)</span> <span class="o">===</span> <span class="mi">2007</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">listdata</span><span class="p">.</span><span class="nx">defaultColumnSetId</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;objectTypeId&#39;</span><span class="p">)</span> <span class="o">===</span> <span class="mi">2045</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">listdata</span><span class="p">.</span><span class="nx">defaultColumnSetId</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+          <span class="p">}</span>
+          <span class="nx">colsetid</span> <span class="o">=</span> <span class="nx">listdata</span><span class="p">.</span><span class="nx">defaultColumnSetId</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">colsetid</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p>[getNewListName description]</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>list must be a [type].</strong><br/>([description])</li>
+</ul>
+
+<p><strong>Returns a [type]</strong><br/>([description])</p></div></div><div class="code"><div class="wrapper">    <span class="nx">getNewListName</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">origName</span><span class="p">)</span> <span class="p">{</span>
+
+      <span class="kd">var</span> <span class="nx">now</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">();</span>
+      <span class="k">return</span> <span class="nx">origName</span> <span class="o">+</span> <span class="s1">&#39; (&#39;</span> <span class="o">+</span> <span class="nx">now</span><span class="p">.</span><span class="nx">format</span><span class="p">(</span><span class="s2">&quot;mm-dd-yy h:MM:ss&quot;</span><span class="p">)</span> <span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">;</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method saveList</span></p>
+
+<p>Saves the active List</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>key must be a String.</strong><br/>(- String representing the list key)</li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">saveList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;Saving the list: &#39;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">);</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>var list = self.getActive();</p></div></div><div class="code"><div class="wrapper">      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+        <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">key</span>
+      <span class="p">});</span>
+      <span class="nx">list</span> <span class="o">=</span> <span class="nx">list</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">listId</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">listId</span> <span class="o">===</span> <span class="s1">&#39;temp&#39;</span> <span class="o">||</span> <span class="nx">listId</span> <span class="o">===</span> <span class="s1">&#39;demo-list&#39;</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// demo list in place for api demo tool</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>not yet saved, so save it</p></div></div><div class="code"><div class="wrapper">          <span class="nx">self</span><span class="p">.</span><span class="nx">addList</span><span class="p">(</span><span class="nx">list</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>previously saved, so we'll update</p></div></div><div class="code"><div class="wrapper">          <span class="kd">var</span> <span class="nx">listRows</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">result</span><span class="p">.</span><span class="nx">rows</span><span class="p">;</span>
+          <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">result</span><span class="p">.</span><span class="nx">rows</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">updateList</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">list</span><span class="p">.</span><span class="nx">attributes</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">result</span><span class="p">.</span><span class="nx">rows</span> <span class="o">=</span> <span class="nx">listRows</span><span class="p">;</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">)){</span>
+ <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span><span class="nx">callback</span><span class="p">();</span>
+ <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span> <span class="err"> </span><span class="p">}</span>
+          <span class="p">});</span>
+          <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method remove</span></p>
+
+<p>via Screener API, Removes specified list from watchlist</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><p><strong>key must be a string.</strong><br/>(Id of the list to be removed)</p></li>
+<li><p><strong>callback must be a function.</strong><br/>(Function called after the list is removed)</p></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">removeList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;Removing the list: &#39;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getListbyKey</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+      <span class="nx">ajax</span><span class="p">({</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists/&quot;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">,</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">,</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+        <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;list removed: &#39;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">);</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">list</span><span class="p">);</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">callback</span><span class="p">();</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;delete failed&#39;</span><span class="p">,</span> <span class="nx">err</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p>via Screener API, Updates a list</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><p><strong>key must be a String.</strong></p></li>
+<li><p><strong>callback must be a Function.</strong></p></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">updateList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">updates</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+        <span class="s1">&#39;id&#39;</span><span class="o">:</span> <span class="nx">key</span>
+      <span class="p">})[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="kd">var</span> <span class="nx">listId</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nx">list</span><span class="p">,</span> <span class="nx">updates</span><span class="p">);</span>
+        <span class="nx">ajax</span><span class="p">({</span>
+          <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists/&quot;</span> <span class="o">+</span> <span class="nx">key</span><span class="p">,</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span>
+          <span class="nx">data</span><span class="o">:</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">list</span><span class="p">),</span>
+          <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+          <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+          <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">list</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">modelChanged</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+              <span class="nx">callback</span><span class="p">();</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p>via Screener API, Renames a list</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><p><strong>key must be a String.</strong></p></li>
+<li><p><strong>callback must be a Function.</strong></p></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">renameList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;renaming list with key: &#39;</span> <span class="o">+</span> <span class="nx">key</span> <span class="o">+</span> <span class="s1">&#39; to &#39;</span> <span class="o">+</span> <span class="nx">name</span><span class="p">);</span>
+      <span class="nx">ajax</span><span class="p">({</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists/&quot;</span> <span class="o">+</span> <span class="nx">key</span> <span class="o">+</span> <span class="s2">&quot;/name&quot;</span><span class="p">,</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span>
+        <span class="nx">data</span><span class="o">:</span> <span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+        <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">callback</span><span class="p">();</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+      <span class="k">return</span> <span class="nx">self</span><span class="p">;</span>
+
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method addList</span></p>
+
+<p>Via Screener API, Adds a new list</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><p><strong>name must be a String.</strong></p></li>
+<li><p><strong>customData must be an Object.</strong></p></li>
+<li><p><strong>callback must be a Function.</strong></p></li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">addList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">list</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span> <span class="o">===</span> <span class="s1">&#39;UNTITLED LIST&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">name</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getNewListName</span><span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">));</span>
+        <span class="nx">list</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="nx">name</span><span class="p">);</span>
+      <span class="p">}</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">list</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">ajax</span><span class="p">({</span>
+          <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists&quot;</span><span class="p">,</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+          <span class="nx">data</span><span class="o">:</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">omit</span><span class="p">(</span><span class="nx">list</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">])),</span>
+          <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+          <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+          <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">status</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">location</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">getResponseHeader</span><span class="p">(</span><span class="s1">&#39;Location&#39;</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">parts</span> <span class="o">=</span> <span class="nx">location</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">);</span>
+
+            <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">parts</span><span class="p">[</span><span class="nx">parts</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+
+            <span class="nx">list</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">);</span>
+            <span class="nx">list</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;fileMgmtObjId&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">);</span>
+            <span class="nx">list</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">);</span>
+            <span class="nx">self</span><span class="p">.</span><span class="nx">activeListItem</span> <span class="o">=</span> <span class="nx">id</span><span class="p">;</span>
+            <span class="nx">list</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">modelChanged</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+              <span class="nx">callback</span><span class="p">();</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+
+      <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="nx">baseListObject</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;objectTypeId&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;lastUsedColumnSetId&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+          <span class="s2">&quot;defaultColumnSetId&quot;</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;list&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;pgcriteria&quot;</span><span class="o">:</span> <span class="p">{</span>
+              <span class="s2">&quot;criteria&quot;</span><span class="o">:</span> <span class="p">[],</span>
+              <span class="s2">&quot;exclude&quot;</span><span class="o">:</span> <span class="p">[],</span>
+              <span class="s2">&quot;include&quot;</span><span class="o">:</span> <span class="p">[]</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;filter&quot;</span><span class="o">:</span> <span class="p">{</span>
+              <span class="s2">&quot;criteria&quot;</span><span class="o">:</span> <span class="p">[],</span>
+              <span class="s2">&quot;exclude&quot;</span><span class="o">:</span> <span class="p">[],</span>
+              <span class="s2">&quot;include&quot;</span><span class="o">:</span> <span class="p">[]</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="s2">&quot;widgets&quot;</span><span class="o">:</span> <span class="p">[],</span>
+          <span class="s2">&quot;result&quot;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&quot;rows&quot;</span><span class="o">:</span> <span class="p">[]</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">};</span>
+      <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+    <span class="p">},</span>
+
+    <span class="nx">incrementDuplicateCounter</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">srcList</span><span class="p">;</span>
+      <span class="nx">srcList</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">where</span><span class="p">({</span>
+        <span class="nx">id</span><span class="o">:</span> <span class="nx">key</span>
+      <span class="p">})[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="k">typeof</span> <span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">duplicateCount</span> <span class="o">!==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>data attrib exists</p></div></div><div class="code"><div class="wrapper">        <span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">duplicateCount</span><span class="o">++</span><span class="p">;</span>
+
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+
+        <span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">duplicateCount</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="nx">srcList</span><span class="p">.</span><span class="nx">collection</span><span class="p">.</span><span class="nx">updateList</span><span class="p">(</span><span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span> <span class="p">{</span>
+        <span class="nx">data</span><span class="o">:</span> <span class="p">{</span>
+          <span class="nx">duplicateCount</span><span class="o">:</span> <span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">duplicateCount</span>
+        <span class="p">}</span>
+      <span class="p">},</span> <span class="p">{});</span>
+      <span class="k">return</span> <span class="nx">srcList</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">).</span><span class="nx">duplicateCount</span><span class="p">;</span>
+    <span class="p">},</span></div></div></div><div class="segment"><div class="comments doc-section"><div class="wrapper"><p><span class='doc-section-header'>Method duplicateList</span></p>
+
+<p>Duplicates a List</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li><strong>key must be a String.</strong><br/>(- String representing the list key)</li>
+</ul></div></div><div class="code"><div class="wrapper">    <span class="nx">duplicateList</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+      <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getListbyKey</span><span class="p">(</span><span class="nx">key</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">name</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">getNewListName</span><span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">));</span>
+      <span class="nx">ajax</span><span class="p">({</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/data-screener/api/v3/lists?sourceListId=&quot;</span> <span class="o">+</span> <span class="nx">key</span> <span class="o">+</span> <span class="s1">&#39;&amp;newListName=&#39;</span> <span class="o">+</span> <span class="nx">name</span><span class="p">,</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">dataType</span><span class="o">:</span> <span class="s2">&quot;JSON&quot;</span><span class="p">,</span>
+        <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">status</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;add res&#39;</span><span class="p">,</span> <span class="nx">res</span><span class="p">);</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">res</span><span class="p">);</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">$</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">callback</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">logger</span><span class="p">.</span><span class="nx">info</span><span class="p">(</span><span class="s1">&#39;dupe callback&#39;</span><span class="p">,</span> <span class="nx">res</span><span class="p">);</span>
+            <span class="nx">callback</span><span class="p">();</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">});</span>
+
+  <span class="k">return</span> <span class="nx">Watchlists</span><span class="p">;</span>
+<span class="p">});</span></div></div></div></div></body></html>

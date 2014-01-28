@@ -17,7 +17,7 @@ Todo:
 Done - 1. Why a task runner?
 Done - 2. What is grunt.js?
 
-3. Automating development tasks
+Done - 3. Automating development tasks
   - starting node server, and launching window
   - watch for changes and running tasks
   - Reloading browser after running tasks
@@ -26,12 +26,11 @@ Done - 2. What is grunt.js?
   - running unit tests
   **Show example of watch, change scss and show output in console and update in browser**
 
-4. Automating production build tasks
+Done - 4. Automating production build tasks
   - compilation and minification (CSS, JS, templates)
   - pre-commit pass/fail tests based on linting and unit test success
   - image optimization
   **Show example, show console after running "grunt dist" and load dist/index.html**
 
-5. Closing comments and personal experience with Grunt and using automation, maybe show Tim the toolman grunting clip (the one where he grunts and says yes yes)
 
-6. Questions
+Done - 6. Questions
